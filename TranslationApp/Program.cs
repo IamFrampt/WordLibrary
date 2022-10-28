@@ -1,5 +1,4 @@
 ﻿using System.Text;
-
 string defaultString = "Use any of the following parameters: " +
     "\r\n-lists " +
     "\r\n-new <list name> <language 1> <language 2> .. <langauge n> " +
@@ -21,8 +20,7 @@ if (!Directory.Exists(dir))
 if(args.Length ==0)
 {
     Console.WriteLine(defaultString);
-    string userinput = Console.ReadLine();
-    args = userinput.Split(' ');
+    args = Console.ReadLine().Split(" ",StringSplitOptions.RemoveEmptyEntries);
 }
 
 whatMethodToRun(args);

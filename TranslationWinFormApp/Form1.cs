@@ -2,8 +2,9 @@ using System.Text;
 
 namespace TranslationWinFormApp
 {
-    // Delete files from folder, i getpracticeword så förekommer inte samma ord igen förrän hela listan är körd,
-    //om man har många språk i en lista så kan man välja vilka språk man ska träna på i getpractice.
+    // 1. Ta bort files från foldern.
+    // 2. I getpracticeword så förekommer inte samma ord igen förrän hela listan är körd.
+    // 3. Om man har många språk i en lista så kan man välja vilka språk man ska träna på i getpractice.
     public partial class Form1 : Form
     {
         private WordList? currentList = null;
@@ -62,7 +63,7 @@ namespace TranslationWinFormApp
                     dgwShowWords.Columns.Clear();
                     dgwShowWords.Rows.Clear();
                     buttonAdd.Enabled = true;
-                    this.Text = "Form1";
+                    ListNames.Enabled = true;
 
                     _fileName = ListNames.Items[ListNames.SelectedIndex].ToString();
                     currentList = WordList.LoadList(_fileName);
@@ -87,22 +88,7 @@ namespace TranslationWinFormApp
             }
         }
 
-        void CheckIfFileIsSaved()
-        {
-            if (!IsFileSaved)
-            {
-                if (MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNo) == DialogResult.Yes)
-                {
-                    SaveFile();
-                }
-                else
-                {
-                    IsFileSaved = true;
-                    switchedListName = true;
-                    OkToShowWords = true;
-                }
-            }
-        }
+        #region Show words
         void GetLists()
         {
             ListNames.Items.Clear();
@@ -119,6 +105,7 @@ namespace TranslationWinFormApp
                 dgwShowWords.Rows[rowIndex].ReadOnly = true;
             }
         }
+        #endregion
 
         private void dgwShowWords_SelectionChanged(object sender, EventArgs e)
         {
@@ -146,59 +133,61 @@ namespace TranslationWinFormApp
                 {
                     currentList.Remove(selectedcolumnindex, wordToRemove);
                     dgwShowWords.Rows.RemoveAt(this.dgwShowWords.SelectedRows[0].Index);
-                    currentList.Save();
                 }
             }
+            SaveFile();
 
         }
+
+        #region Add
         private void buttonAdd_Click(object sender, EventArgs e)
         {
             dgwShowWords.Rows.Insert(0);
             IsFileSaved = false;
-            this.Text = "Form1*";
-        }
-        private void buttonPractice_Click(object sender, EventArgs e)
-        {
-            tabControl1.SelectedIndex = 1;
-            getPracticeWord();
-            buttonNewWord.Enabled = false;
-
+            this.Text = "Translation App*";
         }
 
-        void getPracticeWord()
+        void RefreshList()
         {
-            pWord = currentList.GetWordToPractice();
-            labelPracticeWord.Text = $"\"{pWord}\" to \"{currentList.Languages[pWord.ToLanguage].ToString()}\"";
-        }
-        private void textBoxUserGuess_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
+            List<string>? addWord = new();
+            List<Word>? RefreshedList = new List<Word>();
+
+            foreach (DataGridViewRow row in dgwShowWords.Rows)
             {
-                buttonNewWord.Enabled = true;
-                textBoxUserGuess.Enabled = false;
+                for (int i = 0; i < currentList.Languages.Length; i++)
+                {
+                    if (row.Cells[currentList.Languages[i]].FormattedValue.ToString() != "")
+                        addWord.Add(row.Cells[currentList.Languages[i]].FormattedValue.ToString());
 
-                if (textBoxUserGuess.Text == pWord.Translations[1])
-                {
-                    tabPage2.BackColor = Color.Chartreuse;
-                    correctAnswers++;
-                    wordCounter++;
-                    labelResult.Visible = true;
-                    labelResult.Text = "Correct!!";
                 }
-                else
-                {
-                    tabPage2.BackColor = Color.Red;
-                    wordCounter++;
-                    labelResult.Visible = true;
-                    labelResult.Text = "Wrong!!";
-                }
-                procent = ((double)correctAnswers / (double)wordCounter) * 100;
+                currentList.Add(addWord.ToArray());
+                addWord.Clear();
             }
         }
 
+        #endregion
+
+        #region Save
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             SaveFile();
+        }
+
+        void CheckIfFileIsSaved()
+        {
+            if (!IsFileSaved)
+            {
+                if (MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                {
+                    SaveFile();
+                }
+                else
+                {
+                    IsFileSaved = true;
+                    switchedListName = false;
+                    OkToShowWords = true;
+                }
+            }
         }
 
         void SaveFile()
@@ -235,42 +224,24 @@ namespace TranslationWinFormApp
                 RefreshList();
                 currentList.Save();
                 IsFileSaved = true;
-                this.Text = "Form1";
+                this.Text = "Translation App";
                 OkToShowWords = true;
+                ListNames.Enabled = true;
             }
             else
             {
-                MessageBox.Show("Could not save file!", "Error", MessageBoxButtons.OK);
-                IsFileSaved = true;
+                MessageBox.Show("Could not save file!", "Error", MessageBoxButtons.OK,MessageBoxIcon.Error);
+
+                OkToShowWords = false;
+                switchedListName = false;
+                ListNames.SelectedIndex = LNselectedrowindex;
+                ListNames.Enabled = false;
             }
         }
 
-        void RefreshList()
-        {
-            List<string>? addWord = new();
-            List<Word>? RefreshedList = new List<Word>();
+        #endregion
 
-            foreach (DataGridViewRow row in dgwShowWords.Rows)
-            {
-                for (int i = 0; i < currentList.Languages.Length; i++)
-                {
-                    if (row.Cells[currentList.Languages[i]].FormattedValue.ToString() != "")
-                        addWord.Add(row.Cells[currentList.Languages[i]].FormattedValue.ToString());
-
-                }
-                currentList.Add(addWord.ToArray());
-                addWord.Clear();
-            }
-        }
-
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("This is my labb3 result of a translation app. v1.0.", "Translation app", MessageBoxButtons.OK);
-        }
+        #region NewFile
         private void newFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             NewFileForm _newFileForm = new();
@@ -322,7 +293,47 @@ namespace TranslationWinFormApp
                 fs.Write(bufferLanguage, 0, bufferLanguage.Length);
             }
         }
+        #endregion
 
+        #region practice
+
+        private void buttonPractice_Click(object sender, EventArgs e)
+        {
+            tabControl1.SelectedIndex = 1;
+            getPracticeWord();
+            buttonNewWord.Enabled = false;
+
+        }
+        void getPracticeWord()
+        {
+            pWord = currentList.GetWordToPractice();
+            labelPracticeWord.Text = $"\"{pWord}\" to \"{currentList.Languages[pWord.ToLanguage].ToString()}\"";
+        }
+        private void textBoxUserGuess_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                buttonNewWord.Enabled = true;
+                textBoxUserGuess.Enabled = false;
+
+                if (textBoxUserGuess.Text == pWord.Translations[1])
+                {
+                    tabPage2.BackColor = Color.Chartreuse;
+                    correctAnswers++;
+                    wordCounter++;
+                    labelResult.Visible = true;
+                    labelResult.Text = "Correct!!";
+                }
+                else
+                {
+                    tabPage2.BackColor = Color.Red;
+                    wordCounter++;
+                    labelResult.Visible = true;
+                    labelResult.Text = "Wrong!!";
+                }
+                procent = ((double)correctAnswers / (double)wordCounter) * 100;
+            }
+        }
         private void buttonExitPractice_Click(object sender, EventArgs e)
         {
 
@@ -345,22 +356,39 @@ namespace TranslationWinFormApp
             labelResult.Visible = false;
         }
 
+        #endregion
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("This is my labb3 result of a translation app. v1.0.", "Translation app", MessageBoxButtons.OK);
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!IsFileSaved && !isFormClosing)
             {
-                DialogResult close = MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNo);
+                DialogResult close = MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNoCancel);
 
                 if (close == DialogResult.Yes)
                 {
                     SaveFile();
-                    Close();
+                    if (!isSavingOK)
+                        close = DialogResult.Cancel;
+                    else
+                        Close();
+
                 }
                 if (close == DialogResult.No)
                 {
                     isFormClosing = true;
                     Close();
                 }
+                if(close == DialogResult.Cancel)
+                    e.Cancel = true;
             }
         }
     }
