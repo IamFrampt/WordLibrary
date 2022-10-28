@@ -67,45 +67,6 @@ namespace TranslationWinFormApp
             Close();
         }
 
-        private void NewFileForm_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
-        {
-            switch (numericUpDown1.Value)
-            {
-                case 2:
-                    textBoxL3.Visible = false;
-                    labelL3.Visible = false;
-                    labelL4.Visible = false;
-                    textBoxL4.Visible = false;
-                    labelL5.Visible = false;
-                    textBoxL5.Visible = false;
-                    break;
-                case 3:
-                    textBoxL3.Visible = true;
-                    labelL3.Visible = true;
-                    labelL4.Visible = false;
-                    textBoxL4.Visible = false;
-                    labelL5.Visible = false;
-                    textBoxL5.Visible = false;
-                    break;
-                case 4:
-                    labelL4.Visible = true;
-                    textBoxL4.Visible = true;
-                    labelL5.Visible = false;
-                    textBoxL5.Visible = false;
-                    break;
-                case 5:
-                    labelL5.Visible = true;
-                    textBoxL5.Visible = true;
-                    break;
-
-            }
-        }
-
         private void textBoxL2_TextChanged(object sender, EventArgs e)
         {
             showDoneButton();
@@ -117,35 +78,51 @@ namespace TranslationWinFormApp
         }
 
 
+
+        private void textBoxFileName_TextChanged(object sender, EventArgs e)
+        {
+            showDoneButton();
+        }
         void showDoneButton()
         {
 
             if (textBoxL1.Text == "" || textBoxL2.Text == "" || textBoxFileName.Text == "")
             {
                 buttonDone.Enabled = false;
+                textBoxL3.Enabled = false;
+                textBoxL3.Text = "";
             }
             else
+            {
                 buttonDone.Enabled = true;
-        }
-
-        private void textBoxFileName_TextChanged(object sender, EventArgs e)
-        {
-            showDoneButton();
+                textBoxL3.Enabled = true;
+            }
         }
 
         private void textBoxL3_TextChanged(object sender, EventArgs e)
         {
-            showDoneButton();
+            if (!string.IsNullOrEmpty(textBoxL3.Text))
+            {
+                textBoxL4.Enabled = true;
+            }
+            else
+            {
+                textBoxL4.Enabled = false;
+                textBoxL4.Text = "";
+            }
         }
 
         private void textBoxL4_TextChanged(object sender, EventArgs e)
         {
-            showDoneButton();
-        }
-
-        private void textBoxL5_TextChanged(object sender, EventArgs e)
-        {
-            showDoneButton();
+            if (!string.IsNullOrEmpty(textBoxL4.Text))
+            {
+                textBoxL5.Enabled = true;
+            }
+            else
+            {
+                textBoxL5.Enabled = false;
+                textBoxL5.Text = "";
+            }
         }
     }
 }

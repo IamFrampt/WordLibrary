@@ -49,7 +49,8 @@
 
         using (var readFile = new StreamReader(fileName))
         {
-            nameOfLanguages = readFile.ReadLine().Split(";", StringSplitOptions.RemoveEmptyEntries);
+            nameOfLanguages = 
+                readFile.ReadLine().Split(";", StringSplitOptions.RemoveEmptyEntries);
             WordList newWordList = new WordList(name, nameOfLanguages);
 
             while (!readFile.EndOfStream)

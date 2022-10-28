@@ -6,20 +6,24 @@ namespace TranslationWinFormApp
     //om man har många språk i en lista så kan man välja vilka språk man ska träna på i getpractice.
     public partial class Form1 : Form
     {
-        private WordList currentList = null;
-        private Word pWord = null;
-        static string pathToTranslationsFolder = WordList.pathToFolder;
-        private string _fileName = string.Empty;
-        string newWord = String.Empty;
-        string wordToRemove = String.Empty;
+        private WordList? currentList = null;
+        private Word? pWord = null;
+        static string? pathToTranslationsFolder = WordList.pathToFolder;
+        private string? _fileName = string.Empty;
+        string? newWord = String.Empty;
+        string? wordToRemove = String.Empty;
         int selectedrowindex = 0;
+        int LNselectedrowindex = 0;
         int selectedcolumnindex = 0;
         private int rowIndex = 0;
         private int wordCounter = 0;
         private int correctAnswers = 0;
         private double procent = 0.0;
         private bool IsFileSaved = true;
-        private bool Closing = false;
+        private bool isFormClosing = false;
+        private bool isSavingOK = false;
+        private bool switchedListName = false;
+        private bool OkToShowWords = true;
 
 
         public Form1()
@@ -48,41 +52,54 @@ namespace TranslationWinFormApp
         {
             if (ListNames.SelectedItems.Count > 0)
             {
-                if (!IsFileSaved)
+                if (switchedListName)
+                    CheckIfFileIsSaved();
+
+                if (OkToShowWords)
                 {
-                    if (MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    LNselectedrowindex = ListNames.SelectedIndex;
+                    switchedListName = true;
+                    dgwShowWords.Columns.Clear();
+                    dgwShowWords.Rows.Clear();
+                    buttonAdd.Enabled = true;
+                    this.Text = "Form1";
+
+                    _fileName = ListNames.Items[ListNames.SelectedIndex].ToString();
+                    currentList = WordList.LoadList(_fileName);
+
+                    for (int i = 0; i < currentList.Languages.Length; i++)
                     {
-                        SaveFile();
+                        dgwShowWords.Columns.Add(currentList.Languages[i].ToString(), currentList.Languages[i].ToString());
+                    }
+
+                    currentList.List(0, PrintWord);
+
+                    if (dgwShowWords.Rows.Count > 0)
+                    {
+                        dgwShowWords.Rows[0].Selected = false;
+                        buttonPractice.Enabled = true;
                     }
                     else
                     {
-                        IsFileSaved = true;
+                        buttonPractice.Enabled = false;
                     }
                 }
+            }
+        }
 
-                dgwShowWords.Columns.Clear();
-                dgwShowWords.Rows.Clear();
-                buttonAdd.Enabled = true;
-
-
-                _fileName = ListNames.Items[ListNames.SelectedIndex].ToString();
-                currentList = WordList.LoadList(_fileName);
-
-                for (int i = 0; i < currentList.Languages.Length; i++)
+        void CheckIfFileIsSaved()
+        {
+            if (!IsFileSaved)
+            {
+                if (MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNo) == DialogResult.Yes)
                 {
-                    dgwShowWords.Columns.Add(currentList.Languages[i].ToString(), currentList.Languages[i].ToString());
-                }
-
-                currentList.List(0, PrintWord);
-
-                if (dgwShowWords.Rows.Count > 0)
-                {
-                    dgwShowWords.Rows[0].Selected = false;
-                    buttonPractice.Enabled = true;
+                    SaveFile();
                 }
                 else
                 {
-                    buttonPractice.Enabled = false;
+                    IsFileSaved = true;
+                    switchedListName = true;
+                    OkToShowWords = true;
                 }
             }
         }
@@ -127,7 +144,6 @@ namespace TranslationWinFormApp
             {
                 for (int i = 0; i < count; i++)
                 {
-
                     currentList.Remove(selectedcolumnindex, wordToRemove);
                     dgwShowWords.Rows.RemoveAt(this.dgwShowWords.SelectedRows[0].Index);
                     currentList.Save();
@@ -139,7 +155,7 @@ namespace TranslationWinFormApp
         {
             dgwShowWords.Rows.Insert(0);
             IsFileSaved = false;
-            this.Text += "*";
+            this.Text = "Form1*";
         }
         private void buttonPractice_Click(object sender, EventArgs e)
         {
@@ -182,29 +198,64 @@ namespace TranslationWinFormApp
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!IsFileSaved)
-                SaveFile();
+            SaveFile();
         }
 
         void SaveFile()
         {
-            RefreshList();
-            currentList.Save();
-            IsFileSaved = true;
-            this.Text  = this.Text.Substring(0,this.Text.Length-1);
+            bool breakWholeLoop = false;
+            if (!IsFileSaved)
+            {
+                foreach (DataGridViewRow row in dgwShowWords.Rows)
+                {
+                    if (!breakWholeLoop)
+                    {
+
+                        for (int i = 0; i < currentList.Languages.Length; i++)
+                        {
+                            if (row.Cells[currentList.Languages[i]].FormattedValue.ToString() != "")
+                            {
+                                isSavingOK = true;
+                            }
+                            else
+                            {
+                                isSavingOK = false;
+                                breakWholeLoop = true;
+                                break;
+                            }
+
+                        }
+                    }
+                    else
+                        break;
+                }
+            }
+            if (isSavingOK)
+            {
+                RefreshList();
+                currentList.Save();
+                IsFileSaved = true;
+                this.Text = "Form1";
+                OkToShowWords = true;
+            }
+            else
+            {
+                MessageBox.Show("Could not save file!", "Error", MessageBoxButtons.OK);
+                IsFileSaved = true;
+            }
         }
 
         void RefreshList()
         {
-            List<string> addWord = new();
-            List<Word> RefreshedList = new List<Word>();
+            List<string>? addWord = new();
+            List<Word>? RefreshedList = new List<Word>();
 
             foreach (DataGridViewRow row in dgwShowWords.Rows)
             {
-                for (int j = 0; j < currentList.Languages.Length; j++)
+                for (int i = 0; i < currentList.Languages.Length; i++)
                 {
-                    if (row.Cells[currentList.Languages[j]].FormattedValue.ToString() != "")
-                        addWord.Add(row.Cells[currentList.Languages[j]].FormattedValue.ToString());
+                    if (row.Cells[currentList.Languages[i]].FormattedValue.ToString() != "")
+                        addWord.Add(row.Cells[currentList.Languages[i]].FormattedValue.ToString());
 
                 }
                 currentList.Add(addWord.ToArray());
@@ -229,19 +280,17 @@ namespace TranslationWinFormApp
                 List<string> newFileLanguages = new();
                 newFileLanguages.Add(_newFileForm.Language1);
                 newFileLanguages.Add(_newFileForm.Language2);
-                if (_newFileForm.Language3 != "")
-                    newFileLanguages.Add(_newFileForm.Language3);
-                if (_newFileForm.Language4 != "")
-                    newFileLanguages.Add(_newFileForm.Language4);
-                if (_newFileForm.Language5 != "")
-                    newFileLanguages.Add(_newFileForm.Language5);
+
+                if (string.IsNullOrEmpty(_newFileForm.Language3)) newFileLanguages.Add(_newFileForm.Language3);
+
+                if (string.IsNullOrEmpty(_newFileForm.Language4)) newFileLanguages.Add(_newFileForm.Language4);
+
+                if (string.IsNullOrEmpty(_newFileForm.Language5)) newFileLanguages.Add(_newFileForm.Language5);
 
 
                 createNewFile(_newFileForm.fileName, newFileLanguages.ToArray());
 
                 GetLists();
-
-
             }
 
         }
@@ -280,7 +329,7 @@ namespace TranslationWinFormApp
             if (MessageBox.Show("Are you sure you want to quit?", "Quit?", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
                 tabControl1.SelectedIndex = 0;
-                MessageBox.Show($"You got {Math.Round(procent,2)}% correct. Total words: {wordCounter}", "Result");
+                MessageBox.Show($"You got {Math.Round(procent, 2)}% correct. Total words: {wordCounter}", "Result");
                 wordCounter = 0;
                 correctAnswers = 0;
             }
@@ -298,18 +347,18 @@ namespace TranslationWinFormApp
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (!IsFileSaved && !Closing)
+            if (!IsFileSaved && !isFormClosing)
             {
                 DialogResult close = MessageBox.Show("Do you want to save unsaved progress?", "Save?", MessageBoxButtons.YesNo);
-                
-                if(close == DialogResult.Yes)
+
+                if (close == DialogResult.Yes)
                 {
                     SaveFile();
                     Close();
                 }
-                if(close == DialogResult.No)
+                if (close == DialogResult.No)
                 {
-                    Closing = true;
+                    isFormClosing = true;
                     Close();
                 }
             }

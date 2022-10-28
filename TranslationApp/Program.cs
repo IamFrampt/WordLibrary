@@ -1,6 +1,5 @@
 ﻿using System.Text;
 
-List<string> userInputSplit = new List<string>();
 string defaultString = "Use any of the following parameters: " +
     "\r\n-lists " +
     "\r\n-new <list name> <language 1> <language 2> .. <langauge n> " +
@@ -8,40 +7,37 @@ string defaultString = "Use any of the following parameters: " +
     "\r\n-remove <list name> <language> <word 1> <word 2> .. <word n> " +
     "\r\n-words <listname> <sortByLanguage> " +
     "\r\n-count <listname> " +
-    "\r\n-practice <listname>" +
-    "\r\n-exit \n";
+    "\r\n-practice <listname>";
 
+string path = String.Empty;
 
-string userInput = string.Empty;
-string path = string.Empty;
 string dir = WordList.pathToFolder;
 
 if (!Directory.Exists(dir))
 {
     Directory.CreateDirectory(dir);
 }
-Console.WriteLine(defaultString);
 
-do
+if(args.Length ==0)
 {
-    userInput = Console.ReadLine().ToLower();
-    whatMethodToRun(userInput);
-    Console.WriteLine();
+    Console.WriteLine(defaultString);
+    string userinput = Console.ReadLine();
+    args = userinput.Split(' ');
+}
 
-} while (userInput != "-exit");
+whatMethodToRun(args);
 
+//Methods
 
-void whatMethodToRun(string userInput)
+void whatMethodToRun(string[] args)
 {
-    userInputSplit = userInput.Split(" ").ToList();
-
-    switch (userInputSplit[0])
+    switch (args[0])
     {
         case "-lists":
 
             Console.Clear();
 
-            if (userInputSplit.Count == 1)
+            if (args.Length == 1)
             {
                 ShowListsInFolder();
             }
@@ -54,10 +50,10 @@ void whatMethodToRun(string userInput)
         case "-new":
             Console.Clear();
 
-            if (userInputSplit.Count >= 4)
+            if (args.Length >= 4)
             {
-                CreateNewFile(userInputSplit.ToArray());
-                AddWords(userInputSplit.ToArray());
+                CreateNewFile(args);
+                AddWords(args);
             }
             else
             {
@@ -68,13 +64,13 @@ void whatMethodToRun(string userInput)
         case "-add":
 
             Console.Clear();
-            if (userInputSplit.Count < 2 || userInputSplit.Count > 2)
+            if (args.Length < 2 || args.Length > 2)
             {
                 Console.WriteLine(defaultString);
             }
-            else if (userInputSplit.Count == 2)
+            else if (args.Length == 2)
             {
-                AddWords(userInputSplit.ToArray());
+                AddWords(args);
             }
 
             break;
@@ -82,9 +78,9 @@ void whatMethodToRun(string userInput)
         case "-remove":
 
             Console.Clear();
-            if (userInputSplit.Count >= 4)
+            if (args.Length >= 4)
             {
-                RemoveWord(userInputSplit.ToArray());
+                RemoveWord(args);
             }
             else
             {
@@ -94,15 +90,15 @@ void whatMethodToRun(string userInput)
 
         case "-words":
             Console.Clear();
-            if (userInputSplit.Count >= 2 || userInputSplit.Count <= 3)
+            if (args.Length >= 2 || args.Length <= 3)
             {
                 try
                 {
-                    ShowWords(userInputSplit.ToArray());
+                    ShowWords(args);
                 }
                 catch
                 {
-                    Console.WriteLine($"Could not find file with the name {userInputSplit[1]}.dat");
+                    Console.WriteLine($"Could not find file with the name {args[1]}.dat");
                 }
             }
             else
@@ -114,16 +110,16 @@ void whatMethodToRun(string userInput)
         case "-count":
 
             Console.Clear();
-            if (userInputSplit.Count <= 2)
+            if (args.Length <= 2)
             {
                 try
                 {
-                    WordList CountList = WordList.LoadList(userInputSplit[1]);
-                    Console.WriteLine($"{(CountList.Count() > 1 ? $"There are {CountList.Count()} words" : $"There is {CountList.Count()} word")} in the list \"{userInputSplit[1]}\"");
+                    WordList CountList = WordList.LoadList(args[1]);
+                    Console.WriteLine($"{(CountList.Count() > 1 ? $"There are {CountList.Count()} words" : $"There is {CountList.Count()} word")} in the list \"{args[1]}\"");
                 }
                 catch
                 {
-                    Console.WriteLine($"Could not find file with the name {userInputSplit[1]}.dat");
+                    Console.WriteLine($"Could not find file with the name {args[1]}.dat");
                 }
             }
             else
@@ -135,15 +131,15 @@ void whatMethodToRun(string userInput)
         case "-practice":
 
             Console.Clear();
-            if (userInputSplit.Count == 2)
+            if (args.Length == 2)
             {
                 try
                 {
-                    PracticeWords(userInputSplit.ToArray());
+                    PracticeWords(args);
                 }
                 catch
                 {
-                    Console.WriteLine($"Could not find file with the name {userInputSplit[1]}.dat");
+                    Console.WriteLine($"Could not find file with the name {args[1]}.dat");
                 }
             }
             else
@@ -160,9 +156,6 @@ void whatMethodToRun(string userInput)
             break;
     }
 }
-
-
-//Methods
 
 void ShowListsInFolder()
 {
@@ -220,7 +213,7 @@ void AddWords(string[] userInput)
     catch
     {
         addWord = null;
-        Console.WriteLine($"Could not find file with the name {userInputSplit[1]}.dat");
+        Console.WriteLine($"Could not find file with the name {args[1]}.dat");
     }
 
     if (addWord != null)
@@ -273,7 +266,7 @@ void RemoveWord(string[] userInput)
     catch
     {
         removeWord = null;
-        Console.WriteLine($"Could not find file with the name {userInputSplit[1]}.dat");
+        Console.WriteLine($"Could not find file with the name {args[1]}.dat");
     }
 
     if (removeWord != null)
@@ -283,16 +276,16 @@ void RemoveWord(string[] userInput)
         if (selectedLanguage >= 0)
         {
 
-            for (int i = 3; i < userInputSplit.Count; i++)
+            for (int i = 3; i < args.Length; i++)
             {
-                if (removeWord.Remove(selectedLanguage, userInputSplit[i]))
+                if (removeWord.Remove(selectedLanguage, args[i]))
                 {
-                    Console.WriteLine($"{userInputSplit[i]} deleted from file.");
+                    Console.WriteLine($"{args[i]} deleted from file.");
                     removeWord.Save();
                 }
                 else
                 {
-                    Console.WriteLine($"{userInputSplit[i]} doesn't exist in the list and could not be deleted.");
+                    Console.WriteLine($"{args[i]} doesn't exist in the list and could not be deleted.");
                 }
             }
         }
@@ -307,7 +300,7 @@ int SelectedLanguage(WordList _wordList, string[] userinput)
 {
     for (int i = 0; i < _wordList.Languages.Length; i++)
     {
-        if (userInputSplit[2] == _wordList.Languages[i])
+        if (args[2] == _wordList.Languages[i])
             return i;
     }
     return -1;
@@ -315,11 +308,11 @@ int SelectedLanguage(WordList _wordList, string[] userinput)
 
 void ShowWords(string[] userInput)
 {
-    WordList showWords = WordList.LoadList(userInputSplit[1]);
+    WordList showWords = WordList.LoadList(args[1]);
     int selectedLanguage = -1;
 
 
-    if (userInputSplit.Count > 2)
+    if (args.Length > 2)
     {
         selectedLanguage = SelectedLanguage(showWords, userInput);
     }
@@ -331,13 +324,13 @@ void ShowWords(string[] userInput)
     if (selectedLanguage >= 0)
     {
 
-    for (int i = 0; i < showWords.Languages.Length; i++)
-    {
-        Console.Write(showWords.Languages[i].PadRight(10).ToUpper());
+        for (int i = 0; i < showWords.Languages.Length; i++)
+        {
+            Console.Write(showWords.Languages[i].PadRight(10).ToUpper());
 
-    }
-    Console.WriteLine();
-    showWords.List(selectedLanguage, PrintWordsInList);
+        }
+        Console.WriteLine();
+        showWords.List(selectedLanguage, PrintWordsInList);
     }
     else
     {
